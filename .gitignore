@@ -1,0 +1,5 @@
+# Ignore the local database file
+data/database.db
+
+# Ignore Python's virtual environment folder
+venv/
