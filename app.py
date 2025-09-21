@@ -1,10 +1,11 @@
 import os
 from itsdangerous import URLSafeTimedSerializer
 import psycopg2
+import psycopg2.extras  # <-- THIS IS THE NEW LINE
 import cloudinary
 import cloudinary.uploader
 import pandas as pd
-from flask import Flask, render_template, request, redirect, url_for, flash, session, Response, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, session, Response
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 
