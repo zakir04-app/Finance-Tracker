@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finance Tracker{% endblock %} - {{ settings.app_title or 'Finance Tracker' }}</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;700&family=Nunito+Sans:wght@400;700&family=Open+Sans:wght@400;700&family=Playfair+Display:wght@400;700&family=Poppins:wght@400;700&family=Roboto+Slab:wght@400;700&family=Roboto:wght@400;700&family=Source+Sans+Pro:wght@400;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        // Instantly applies theme/font from localStorage
+        (function() {
+            const theme = localStorage.getItem('theme') || 'theme-light';
+            const font = localStorage.getItem('font') || 'font-roboto';
+            document.documentElement.className = theme + ' ' + font;
+        })();
+    </script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            {% if settings.logo_filename %}
+                <img src="{{ url_for('uploaded_file', filename=settings.logo_filename) }}?v={{ range(1, 9999) | random }}" alt="Logo" class="nav-logo">
+            {% endif %}
+            {{ settings.app_title or 'Finance Tracker' }}
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="#" onclick="openModal('calculatorModal')">Calculator</a>
+            <a href="{{ url_for('settings') }}">Settings</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer>
+        <p>This App Developed by <strong>Zakir Ullah Ihsan Ul haq</strong> | +923195894880</p>
+    </footer>
+
+    {% block modals %}{% endblock %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<h1>Application Settings</h1>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+{% endwith %} <div class="settings-form-container">
+    <form action="{{ url_for('update_settings') }}" method="POST" enctype="multipart/form-data" class="settings-section">
+        <h3>General</h3>
+        <div class="form-group">
+            <label for="app_title">Application Title</label>
+            <input type="text" id="app_title" name="app_title" value="{{ settings.app_title }}" required>
+        </div>
+        <div class="form-group">
+            <label for="logo">Upload Logo</label>
+            <input type="file" id="logo" name="logo" accept="image/png, image/jpeg">
+            <small>Current Logo: {{ settings.logo_filename or 'None' }}</small>
+        </div>
+        <button type="submit" class="action-btn btn-blue">Save General Settings</button>
+    </form>
+
+    <div class="appearance-settings settings-section">
+        <h3>Appearance</h3>
+        <div class="form-group">
+            <label for="theme-select">Theme</label>
+            <select id="theme-select">
+                <option value="theme-light">Classic Light</option>
+                <option value="theme-dark">Classic Dark</option>
+                <option value="theme-ocean">Ocean Blue</option>
+                <option value="theme-forest">Forest Green</option>
+                <option value="theme-crimson">Crimson Red</option>
+                <option value="theme-charcoal">Charcoal</option>
+                <option value="theme-lavender">Lavender</option>
+                <option value="theme-sandstone">Sandstone</option>
+                <option value="theme-midnight">Midnight</option>
+                <option value="theme-sunrise">Sunrise</option>
+                <option value="theme-graphite">Graphite</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="font-select">Font Style</label>
+            <select id="font-select">
+                <option value="font-roboto">Roboto</option>
+                <option value="font-open-sans">Open Sans</option>
+                <option value="font-lato">Lato</option>
+                <option value="font-montserrat">Montserrat</option>
+                <option value="font-poppins">Poppins</option>
+                <option value="font-source-sans-pro">Source Sans Pro</option>
+                <option value="font-nunito-sans">Nunito Sans</option>
+                <option value="font-merriweather">Merriweather (Serif)</option>
+                <option value="font-playfair-display">Playfair Display (Serif)</option>
+                <option value="font-roboto-slab">Roboto Slab (Slab Serif)</option>
+            </select>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- Appearance Settings Logic ---
+    const themeSelect = document.getElementById('theme-select');
+    const fontSelect = document.getElementById('font-select');
+    const root = document.documentElement;
+
+    function applySettings() {
+        const theme = localStorage.getItem('theme') || 'theme-light';
+        const font = localStorage.getItem('font') || 'font-roboto';
+        themeSelect.value = theme;
+        fontSelect.value = font;
+        root.className = theme + ' ' + font;
+    }
+
+    themeSelect.addEventListener('change', function() {
+        localStorage.setItem('theme', this.value); applySettings();
+    });
+    fontSelect.addEventListener('change', function() {
+        localStorage.setItem('font', this.value); applySettings();
+    });
+    
+    // Apply settings on page load
+    applySettings();
+</script>
+{% endblock %}

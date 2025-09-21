@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - {{ settings.app_title or 'Finance Tracker' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            {% if settings.logo_filename %}
+                <img src="{{ url_for('uploaded_file', filename=settings.logo_filename) }}" alt="Logo" class="nav-logo">
+            {% endif %}
+            {{ settings.app_title or 'Finance Tracker' }}
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </nav>
+    <div class="main-content">
+        <div class="records-header">
+            <h1>{{ title }} ({{ session['currency_code'] }})</h1>
+            <div class="records-actions">
+                <button class="action-btn btn-grey" onclick="window.print()">🖨️ Print</button>
+                <a href="{{ url_for('download_records', record_type=record_type) }}" class="action-btn btn-green">📄 Download CSV</a>
+            </div>
+        </div>
+        <div class="records-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        {% for header in headers %}
+                            <th>{{ header }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        {% for header in headers %}
+                            <td>
+                                {% set col = header.lower().replace(' ', '_') %}
+                                {% if 'amount' in col or 'balance' in col %}
+                                    {{ currencies[session['currency_code']] }} {{ "%.2f"|format(record[col]) }}
+                                {% else %}
+                                    {{ record[col] or 'N/A' }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="{{ headers|length }}" style="text-align:center; padding: 20px;">No records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

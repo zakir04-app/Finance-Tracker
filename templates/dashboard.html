@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <div class="welcome-header">
+        <h1>Welcome, {{ session['username'] }}!</h1>
+        <form action="{{ url_for('update_currency') }}" method="POST" class="currency-form">
+            <label for="currency-select">Ledger:</label>
+            <select name="currency" id="currency-select" onchange="this.form.submit()">
+                {% for code in currencies %}<option value="{{ code }}" {% if session['currency_code'] == code %}selected{% endif %}>{{ code }}</option>{% endfor %}
+            </select>
+        </form>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category, message in messages %}<div class="flash-message flash-{{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
+
+    <div class="summary-cards">
+        <a href="{{ url_for('view_records', record_type='income') }}" class="card-link"><div class="card card-green"><h3>Total Income</h3><p>{{ currencies[session['currency_code']] }} {{ "%.2f"|format(summaries.total_income) }}</p></div></a>
+        <a href="{{ url_for('view_records', record_type='expenses') }}" class="card-link"><div class="card card-red"><h3>Total Expenses</h3><p>{{ currencies[session['currency_code']] }} {{ "%.2f"|format(summaries.total_expenses) }}</p></div></a>
+        <a href="{{ url_for('view_records', record_type='loans_taken') }}" class="card-link"><div class="card card-yellow"><h3>Loan Taken</h3><p>{{ currencies[session['currency_code']] }} {{ "%.2f"|format(summaries.loan_taken) }}</p></div></a>
+        <a href="{{ url_for('view_records', record_type='loans_given') }}" class="card-link"><div class="card card-blue"><h3>Loan Given</h3><p>{{ currencies[session['currency_code']] }} {{ "%.2f"|format(summaries.loan_given) }}</p></div></a>
+        <a href="{{ url_for('view_records', record_type='sent_home') }}" class="card-link"><div class="card card-grey"><h3>Money Sent Home</h3><p>{{ currencies[session['currency_code']] }} {{ "%.2f"|format(summaries.money_sent_home) }}</p></div></a>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="action-btn btn-green" onclick="openModal('incomeModal')">Add Income</button>
+        <button class="action-btn btn-red" onclick="openModal('expenseModal')">Add Expense</button>
+        <button class="action-btn btn-blue" onclick="openModal('loanModal')">Add Loan</button>
+        <button class="action-btn btn-purple" onclick="openModal('repaymentModal')">Record Repayment</button>
+        <button class="action-btn btn-yellow" onclick="openModal('sendMoneyModal')">Send Money Home</button>
+    </div>
+{% endblock %}
+
+{% block modals %}
+    <div id="incomeModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('incomeModal')">&times;</span><h2>Add Income</h2>
+        <form action="{{ url_for('add_transaction') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="type" value="income">
+            <div class="form-group"><label>Income Source</label><input type="text" name="category" placeholder="e.g., Salary, Freelance" required></div>
+            <div class="form-group"><label>Amount</label><input type="number" step="0.01" name="amount" required></div>
+            <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+            <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+            <div class="form-group"><label>Attach File</label><input type="file" name="attachment"></div>
+            <button type="submit" class="action-btn btn-green">Save Income</button>
+        </form>
+    </div></div>
+
+    <div id="expenseModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('expenseModal')">&times;</span><h2>Add Expense</h2>
+        <form action="{{ url_for('add_transaction') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="type" value="expense">
+            <div class="form-group"><label>Reason</label><input type="text" name="category" placeholder="e.g., Groceries, Rent" required></div>
+            <div class="form-group"><label>Amount</label><input type="number" step="0.01" name="amount" required></div>
+            <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+            <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+            <div class="form-group"><label>Attach File</label><input type="file" name="attachment"></div>
+            <button type="submit" class="action-btn btn-red">Save Expense</button>
+        </form>
+    </div></div>
+
+    <div id="sendMoneyModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('sendMoneyModal')">&times;</span><h2>Send Money Home</h2>
+        <form action="{{ url_for('add_transaction') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="type" value="expense"><input type="hidden" name="category" value="Money Sent Home">
+            <div class="form-group"><label>Amount</label><input type="number" step="0.01" name="amount" required></div>
+            <div class="form-group"><label>Payment Method</label><input type="text" name="payment_method" placeholder="e.g., Bank Transfer, Cash"></div>
+            <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+            <div class="form-group"><label>Description</label><textarea name="description" rows="2" placeholder="e.g., To John Doe for family" required></textarea></div>
+            <div class="form-group"><label>Attach File</label><input type="file" name="attachment"></div>
+            <button type="submit" class="action-btn btn-yellow" style="color:#333;">Save Record</button>
+        </form>
+    </div></div>
+    
+    <div id="loanModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('loanModal')">&times;</span><h2>Add Loan</h2>
+        <form action="{{ url_for('add_loan') }}" method="POST">
+            <div class="form-group"><label>Loan Type</label><select name="type"><option value="taken">Loan Taken</option><option value="given">Loan Given</option></select></div>
+            <div class="form-group"><label>Amount</label><input type="number" step="0.01" name="amount" required></div>
+            <div class="form-group"><label>Person Name</label><input type="text" name="person" required></div>
+            <div class="form-group"><label>Account Number / Cash</label><input type="text" name="account_details"></div>
+            <div class="form-group"><label>Bank Name</label><input type="text" name="bank_name"></div>
+            <div class="form-group"><label>Payment Method</label><input type="text" name="payment_method"></div>
+            <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+            <div class="form-group"><label>Description</label><textarea name="description" rows="2"></textarea></div>
+            <button type="submit" class="action-btn btn-blue">Save Loan</button>
+        </form>
+    </div></div>
+    
+    <div id="repaymentModal" class="modal"><div class="modal-content"><span class="close-btn" onclick="closeModal('repaymentModal')">&times;</span><h2>Record Loan Repayment</h2>
+        <form action="{{ url_for('record_repayment') }}" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Select Original Loan</label>
+                <select name="loan_id" required>
+                    <option value="" disabled selected>-- Select an Outstanding Loan --</option>
+                    {% for loan in outstanding_loans %}
+                    <option value="{{ loan.id }}">
+                        {{ loan.type.capitalize() }} - {{ loan.person }} | {{ "%.2f"|format(loan.current_balance) }} remaining
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group"><label>Amount Being Repaid</label><input type="number" step="0.01" name="amount" required></div>
+            <div class="form-group"><label>Date</label><input type="date" name="date" required></div>
+            <div class="form-group"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+            <div class="form-group"><label>Attach File</label><input type="file" name="attachment"></div>
+            <button type="submit" class="action-btn btn-purple">Record Repayment</button>
+        </form>
+    </div></div>
+
+    <div id="calculatorModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal('calculatorModal')">&times;</span>
+            <div class="calculator-container">
+                <div class="basic-calc">
+                    <h2>Calculator</h2>
+                    <input type="text" id="calc-display" readonly>
+                    <div class="calc-keys">
+                        <button onclick="appendToDisplay('7')">7</button> <button onclick="appendToDisplay('8')">8</button> <button onclick="appendToDisplay('9')">9</button> <button class="operator" onclick="appendToDisplay('/')">÷</button>
+                        <button onclick="appendToDisplay('4')">4</button> <button onclick="appendToDisplay('5')">5</button> <button onclick="appendToDisplay('6')">6</button> <button class="operator" onclick="appendToDisplay('*')">×</button>
+                        <button onclick="appendToDisplay('1')">1</button> <button onclick="appendToDisplay('2')">2</button> <button onclick="appendToDisplay('3')">3</button> <button class="operator" onclick="appendToDisplay('-')">-</button>
+                        <button onclick="appendToDisplay('0')">0</button> <button onclick="appendToDisplay('.')">.</button> <button onclick="clearDisplay()">C</button> <button class="operator" onclick="appendToDisplay('+')">+</button>
+                        <button class="equal" onclick="calculateResult()">=</button>
+                    </div>
+                </div>
+                <div class="currency-converter">
+                    <h2>Manual Currency Converter</h2>
+                    <div class="form-group">
+                        <label>Amount to Convert</label>
+                        <input type="number" id="convert-amount" placeholder="e.g., 100">
+                    </div>
+                    <div class="converter-rate-setter">
+                        <label>Set Rate: 1 <span id="rate-from-currency">PKR</span> = </label>
+                        <input type="number" step="any" id="manual-rate" placeholder="e.g., 0.0036">
+                        <span id="rate-to-currency">USD</span>
+                    </div>
+                    <div class="converter-row">
+                        <select id="convert-from">{% for code in currencies %}<option value="{{ code }}">{{ code }}</option>{% endfor %}</select>
+                        <span>→</span>
+                        <select id="convert-to">{% for code in currencies %}<option value="{{ code }}" {% if code == 'USD' %}selected{% endif %}>{{ code }}</option>{% endfor %}</select>
+                    </div>
+                    <div class="form-group">
+                        <label>Result</label>
+                        <input type="text" id="convert-result" readonly>
+                    </div>
+                    <button class="action-btn btn-blue" onclick="convertManualCurrency()">Convert</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // --- Modal & General Scripts ---
+    function openModal(modalId){document.getElementById(modalId).style.display='block';}
+    function closeModal(modalId){document.getElementById(modalId).style.display='none';}
+    window.onclick=function(event){ const modals=document.getElementsByClassName('modal'); for(let i=0;i<modals.length;i++){if(event.target==modals[i]){modals[i].style.display="none";}}}
+
+    // --- Calculator Scripts ---
+    const display = document.getElementById('calc-display');
+    function appendToDisplay(value) { display.value += value; }
+    function clearDisplay() { display.value = ''; }
+    function calculateResult() { try { display.value = eval(display.value.replace(/[^-()\d/*+.]/g, '')); } catch (e) { display.value = 'Error'; } }
+    
+    document.addEventListener('keydown', function(event) {
+        const key = event.key;
+        if (document.getElementById('calculatorModal').style.display !== 'block') return;
+        if (document.activeElement.tagName === 'INPUT' && document.activeElement.id !== 'calc-display') return;
+        if (/[0-9.]/.test(key)) { appendToDisplay(key); }
+        if (/[+\-*/]/.test(key)) { appendToDisplay(key); }
+        if (key === 'Enter' || key === '=') { event.preventDefault(); calculateResult(); }
+        if (key === 'Backspace') { display.value = display.value.slice(0, -1); }
+        if (key.toLowerCase() === 'c' || key === 'Escape') { clearDisplay(); }
+    });
+
+    // --- Manual Currency Converter Scripts ---
+    const fromSelect = document.getElementById('convert-from');
+    const toSelect = document.getElementById('convert-to');
+    const rateFromLabel = document.getElementById('rate-from-currency');
+    const rateToLabel = document.getElementById('rate-to-currency');
+
+    function updateRateLabels() {
+        rateFromLabel.textContent = fromSelect.value;
+        rateToLabel.textContent = toSelect.value;
+    }
+    fromSelect.addEventListener('change', updateRateLabels);
+    toSelect.addEventListener('change', updateRateLabels);
+    
+    function convertManualCurrency() {
+        const amount = parseFloat(document.getElementById('convert-amount').value);
+        const rate = parseFloat(document.getElementById('manual-rate').value);
+        const resultInput = document.getElementById('convert-result');
+        if (isNaN(amount) || isNaN(rate)) {
+            alert('Please enter a valid amount and rate.');
+            return;
+        }
+        resultInput.value = (amount * rate).toFixed(2);
+    }
+    updateRateLabels();
+</script>
+{% endblock %}
