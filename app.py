@@ -47,17 +47,22 @@ CURRENCIES = {'PKR': 'Rs', 'AED': 'AED', 'USD': '$', 'SAR': 'SR', 'INR': '₹'}
 
 @app.context_processor
 def inject_user_settings():
-    """Makes user-specific settings (like app title) available to all templates."""
+    """
+    Makes user-specific settings available to all templates.
+    This now handles the case where a user is not logged in.
+    """
+    settings = None  # Start with a default of None
     if 'user_id' in session:
         conn = get_db_connection()
+        # Use DictCursor to access columns by name
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cursor.execute('SELECT app_title, logo_filename FROM settings WHERE user_id = %s', (session['user_id'],))
         settings = cursor.fetchone()
         cursor.close()
         conn.close()
-        return dict(settings=settings)
-    return dict()
-
+    
+    # Always return a dictionary with the 'settings' key
+    return dict(settings=settings)
 # --- Authentication & Password Reset Routes ---
 
 @app.route('/', methods=['GET', 'POST'])
